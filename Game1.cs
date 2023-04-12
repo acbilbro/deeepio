@@ -16,13 +16,14 @@ namespace deeepio
         float pRotation = 0.0f;
         Vector2 pOrigin;
         #endregion
-        Texture2D cursorTexture;
+        Texture2D cursorTexture, projTexture;
         Rectangle cursorRect;
 
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            Window.Title = "Deeepio";
             IsMouseVisible = false;
             _graphics.IsFullScreen = false;
         }
@@ -48,6 +49,7 @@ namespace deeepio
 
             pTexture = Content.Load<Texture2D>("player");
             cursorTexture = Content.Load<Texture2D>("cursor");
+            projTexture = Content.Load<Texture2D>("projectile");
         }
 
         protected override void Update(GameTime gameTime)
@@ -96,6 +98,25 @@ namespace deeepio
             _spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+    }
+
+    public class Projectile
+    {
+        public Vector2 Position { get; set; }
+        public Vector2 Direction { get; set; }
+        public Vector2 Origin { get; set; }
+        public float Speed { get; set; }
+        public int StartTime { get; set; }
+
+        public Projectile(Rectangle originRect, MouseState ms)
+        {
+            this.Direction = new Vector2(ms.X, ms.Y) - new Vector2(originRect.Width / 2, originRect.Top);
+        }
+
+        public void Move()
+        {
+
         }
     }
 }
