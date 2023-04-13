@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace deeepio
 {
@@ -16,6 +17,10 @@ namespace deeepio
         float pRotation = 0.0f;
         Vector2 pOrigin;
         #endregion
+        
+        #region Enemy Variables
+        #endregion
+        
         Texture2D cursorTexture, projTexture;
         Rectangle cursorRect;
 
@@ -58,12 +63,10 @@ namespace deeepio
                 Exit();
 
             KeyboardState keyState = Keyboard.GetState();
-
             MouseState mouseState = Mouse.GetState();
+            
             Vector2 mousePosition = new Vector2(mouseState.X, mouseState.Y);
-
             Vector2 distance = mousePosition - new Vector2(pRect.X, pRect.Y);
-
             pRotation = (float)Math.Atan2(distance.Y, distance.X) + (float)Math.PI/2;
 
             if (keyState.IsKeyDown(Keys.W)) {
@@ -109,14 +112,16 @@ namespace deeepio
         public float Speed { get; set; }
         public int StartTime { get; set; }
 
-        public Projectile(Rectangle originRect, MouseState ms)
+        public Projectile(Rectangle originRect, MouseState ms, GameTime gt)
         {
             this.Direction = new Vector2(ms.X, ms.Y) - new Vector2(originRect.Width / 2, originRect.Top);
+            this.Direction.Normalize();
+            this.StartTime = gt.TotalGameTime.TotalMilliseconds;
         }
 
-        public void Move()
+        public void Move(GameTime gt)
         {
-
+            this.Position = this.Origin + this.Speed * (gt.TotalGameTime.TotalMilliseconds - this.StartTime) * this.Direction;
         }
     }
 }
