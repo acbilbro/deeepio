@@ -162,7 +162,7 @@ namespace deeepio
 
         public void Move(GameTime gt)
         {
-            this.Position = this.Origin + (this.Speed * ((float)gt.TotalGameTime.TotalMilliseconds - this.StartTime) * this.Direction);
+            this.Position = this.Origin + (this.Speed * ((int)gt.TotalGameTime.TotalMilliseconds - this.StartTime) * this.Direction);
         }
     }
 }
