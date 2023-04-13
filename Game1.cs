@@ -15,8 +15,10 @@ namespace deeepio
         Texture2D pTexture;
         Sprite player;
         #endregion
-        
+
         #region Enemy Variables
+        Sprite testEnemy;
+        Texture2D eTexture;
         #endregion
         
         Texture2D cursorTexture, projTexture;
@@ -43,8 +45,7 @@ namespace deeepio
 
             // Game stuff
             player = new Sprite(200, 200, 63, 83, 31, 51);
-            //enemy = new Sprite(0, 0, 150, 150, 0, 0);
-            //eRect = new Rectangle(0, 0, 150, 150);
+            testEnemy = new Sprite(500, 400, 150, 150, 129, 170); //sprite is 260 by 302
 
             cursorRect = new Rectangle(0, 0, 25, 25);
 
@@ -58,6 +59,7 @@ namespace deeepio
             pTexture = Content.Load<Texture2D>("player");
             cursorTexture = Content.Load<Texture2D>("cursor");
             projTexture = Content.Load<Texture2D>("projectile");
+            eTexture = Content.Load<Texture2D>("enemy");
 
             font = Content.Load<SpriteFont>("font");
         }
@@ -127,6 +129,8 @@ namespace deeepio
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             _spriteBatch.Begin();
+
+            testEnemy.Draw(_spriteBatch, eTexture, Color.White, SpriteEffects.None);
 
             for (int i = projList.Count - 1; i >= 0; i--)
             {
