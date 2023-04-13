@@ -13,9 +13,7 @@ namespace deeepio
 
         #region Player Variables
         Texture2D pTexture;
-        Rectangle pRect;
-        float pRotation = 0.0f;
-        Vector2 pOrigin;
+        Sprite player;
         #endregion
         
         #region Enemy Variables
@@ -44,8 +42,9 @@ namespace deeepio
             _graphics.ApplyChanges();
 
             // Game stuff
-            pOrigin = new Vector2(257, 297);
-            pRect = new Rectangle(200, 200, 63, 83);
+            player = new Sprite(200, 200, 63, 83, 31, 51);
+            //enemy = new Sprite(0, 0, 150, 150, 0, 0);
+            //eRect = new Rectangle(0, 0, 150, 150);
 
             cursorRect = new Rectangle(0, 0, 25, 25);
 
@@ -75,20 +74,24 @@ namespace deeepio
 
             #region Player Movement & Rotation
             Vector2 mousePosition = new Vector2(mouseState.X, mouseState.Y);
-            Vector2 distance = mousePosition - new Vector2(pRect.X, pRect.Y);
-            pRotation = (float)Math.Atan2(distance.Y, distance.X) + (float)Math.PI/2;
+            Vector2 distance = mousePosition - new Vector2(player.Rect.X, player.Rect.Y);
+            player.Rotation = (float)Math.Atan2(distance.Y, distance.X) + (float)Math.PI/2;
 
-            if (keyState.IsKeyDown(Keys.W)) {
-                pRect.Y -= 2;
+            if (keyState.IsKeyDown(Keys.W))
+            {
+                player.MoveY(-2);
             }
-            if (keyState.IsKeyDown(Keys.S)) {
-                pRect.Y += 2;
+            if (keyState.IsKeyDown(Keys.S))
+            {
+                player.MoveY(2);
             }
-            if (keyState.IsKeyDown(Keys.A)) {
-                pRect.X -= 2;
+            if (keyState.IsKeyDown(Keys.A))
+            {
+                player.MoveX(-2);
             }
-            if (keyState.IsKeyDown(Keys.D)) {
-                pRect.X += 2;
+            if (keyState.IsKeyDown(Keys.D))
+            {
+                player.MoveX(2);
             }
             #endregion
 
@@ -101,13 +104,17 @@ namespace deeepio
             // Player Projectiles
             if (mouseState.LeftButton == ButtonState.Released && prevMouseState.LeftButton == ButtonState.Pressed)
             {
-                projList.Add(new Projectile(pRect, mouseState, gameTime));
+                projList.Add(new Projectile(player.Rect, mouseState, gameTime));
             }
 
             // Update Projectiles
-            foreach (Projectile p in projList)
+            for (int i = projList.Count - 1; i >= 0; i--)
             {
-                p.Move(gameTime);
+                projList[i].Move(gameTime);
+                if (gameTime.TotalGameTime.TotalMilliseconds - projList[i].StartTime > 1300)
+                {
+                    projList.RemoveAt(i);
+                }
             }
             #endregion
 
@@ -121,17 +128,47 @@ namespace deeepio
 
             _spriteBatch.Begin();
 
-            _spriteBatch.Draw(pTexture, pRect, null, Color.White, pRotation, new Vector2(31, 51), SpriteEffects.None, 0.0f);
-            _spriteBatch.Draw(cursorTexture, cursorRect, Color.White);
-
-            foreach (Projectile p in projList)
+            for (int i = projList.Count - 1; i >= 0; i--)
             {
-                _spriteBatch.Draw(projTexture, p.Position, Color.White);
+                _spriteBatch.Draw(projTexture, projList[i].Position, Color.White);
             }
+
+            player.Draw(_spriteBatch, pTexture, Color.White, SpriteEffects.None);
+            _spriteBatch.Draw(cursorTexture, cursorRect, Color.White);
 
             _spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+    }
+
+    public class Sprite
+    {
+        public Rectangle Rect { get; set; }
+        public float Rotation { get; set; }
+        public Vector2 Origin { get; set; }
+
+        public Sprite(int rectX, int rectY, int rectW, int rectH, int vectX, int vectY) 
+        {
+            this.Rect = new Rectangle(rectX, rectY, rectW, rectH);
+            this.Origin = new Vector2(vectX, vectY);
+        }
+
+        public void Draw(SpriteBatch sb, Texture2D text, Color c, SpriteEffects se)
+        {
+            sb.Draw(text, this.Rect, null, c, this.Rotation, this.Origin, se, 0.0f);
+        }
+
+        public void MoveX(int moveLength)
+        {
+            int newInt = this.Rect.X + moveLength;
+            this.Rect = new Rectangle(newInt, this.Rect.Y, this.Rect.Width, this.Rect.Height);
+        }
+
+        public void MoveY(int moveLength)
+        {
+            int newInt = this.Rect.Y + moveLength;
+            this.Rect = new Rectangle(this.Rect.X, newInt, this.Rect.Width, this.Rect.Height);
         }
     }
 
@@ -157,7 +194,7 @@ namespace deeepio
 
             this.StartTime = (int)gt.TotalGameTime.TotalMilliseconds;
             this.Speed = 0.58f;
-            this.Origin = new Vector2(originRect.X, originRect.Y);
+            this.Origin = new Vector2(originRect.X - 10, originRect.Y - 5);
         }
 
         public void Move(GameTime gt)
