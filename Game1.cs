@@ -45,7 +45,7 @@ namespace deeepio
 
             // Game stuff
             player = new Sprite(200, 200, 63, 83, 31, 51);
-            testEnemy = new Sprite(500, 400, 150, 150, 129, 170); //sprite is 260 by 302
+            testEnemy = new Sprite(500, 400, 260, 302, 129, 170);
 
             cursorRect = new Rectangle(0, 0, 25, 25);
 
