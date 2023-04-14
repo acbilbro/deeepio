@@ -27,6 +27,9 @@ namespace deeepio
         MouseState mouseState, prevMouseState;
         KeyboardState keyState;
         List<Projectile> projList = new List<Projectile>();
+        List<Sprite> enemyList = new List<Sprite>();
+        int playerHealth;
+        int enemyHealth = 3;
 
         public Game1()
         {
@@ -46,6 +49,7 @@ namespace deeepio
             // Game stuff
             player = new Sprite(200, 200, 63, 83, 31, 51);
             testEnemy = new Sprite(500, 400, 260, 302, 129, 170);
+            enemyList.Add(testEnemy);
 
             cursorRect = new Rectangle(0, 0, 25, 25);
 
@@ -102,6 +106,16 @@ namespace deeepio
             cursorRect.Y = (int)mousePosition.Y - 12;
             #endregion
 
+            #region Enemy Stuff
+            for (int i = enemyList.Count - 1; i >= 0; i--)
+            {
+                Vector2 wierdVector = new Vector2(enemyList[i].Rect.X - enemyList[i].Origin.X, enemyList[i].Rect.Y + enemyList[i].Origin.Y) - new Vector2(player.Rect.Y, player.Rect.X);
+                Vector2 eDistance = wierdVector;
+                enemyList[i].Rotation =  - (float)Math.Atan2(eDistance.Y, eDistance.X) + (float)Math.PI/16;
+            }
+
+            #endregion
+
             #region Projectile Stuff
             // Player Projectiles
             if (mouseState.LeftButton == ButtonState.Released && prevMouseState.LeftButton == ButtonState.Pressed)
@@ -120,6 +134,18 @@ namespace deeepio
             }
             #endregion
 
+            /*
+            public void Hitboxes(){
+                for (int i = projList.count; i>0; i++){
+                    for(int j = enemyList.count; i>0; i++){
+                        if(projList[i].intersects(enemyList[j])){
+                            enemyHealth--;
+                        }
+                    }
+                }
+            }
+
+            */
 
             base.Update(gameTime);
         }
@@ -130,7 +156,7 @@ namespace deeepio
 
             _spriteBatch.Begin();
 
-            testEnemy.Draw(_spriteBatch, eTexture, Color.White, SpriteEffects.None);
+            enemyList[0].Draw(_spriteBatch, eTexture, Color.White, SpriteEffects.None);
 
             for (int i = projList.Count - 1; i >= 0; i--)
             {
