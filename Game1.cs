@@ -28,8 +28,6 @@ namespace deeepio
         KeyboardState keyState;
         List<Projectile> projList = new List<Projectile>();
         List<Sprite> enemyList = new List<Sprite>();
-        int playerHealth;
-        int enemyHealth = 3;
 
         public Game1()
         {
@@ -47,8 +45,8 @@ namespace deeepio
             _graphics.ApplyChanges();
 
             // Game stuff
-            player = new Sprite(200, 200, 63, 83, 31, 51);
-            testEnemy = new Sprite(500, 400, 260, 302, 129, 170);
+            player = new Sprite(200, 200, 63, 83, 31, 51, 3);
+            testEnemy = new Sprite(500, 400, 130, 151, 130, 170, 10);
             enemyList.Add(testEnemy);
 
             cursorRect = new Rectangle(0, 0, 25, 25);
@@ -109,11 +107,17 @@ namespace deeepio
             #region Enemy Stuff
             for (int i = enemyList.Count - 1; i >= 0; i--)
             {
-                Vector2 wierdVector = new Vector2(enemyList[i].Rect.X - enemyList[i].Origin.X, enemyList[i].Rect.Y + enemyList[i].Origin.Y) - new Vector2(player.Rect.Y, player.Rect.X);
-                Vector2 eDistance = wierdVector;
-                enemyList[i].Rotation =  - (float)Math.Atan2(eDistance.Y, eDistance.X) + (float)Math.PI/16;
+                Vector2 eDistance = new Vector2(enemyList[i].Rect.X - 100, enemyList[i].Rect.Y + 105) - new Vector2(player.Rect.Y, player.Rect.X);
+                enemyList[i].Rotation = - (float)Math.Atan2(eDistance.Y, eDistance.X) + (float)Math.PI/16;
             }
 
+            for (int i = enemyList.Count - 1; i >= 0; i--)
+            {
+                if (enemyList[i].Health == 0)
+                {
+                    enemyList.RemoveAt(i);
+                }
+            }
             #endregion
 
             #region Projectile Stuff
@@ -134,19 +138,6 @@ namespace deeepio
             }
             #endregion
 
-            /*
-            public void Hitboxes(){
-                for (int i = projList.count; i>0; i++){
-                    for(int j = enemyList.count; i>0; i++){
-                        if(projList[i].intersects(enemyList[j])){
-                            enemyHealth--;
-                        }
-                    }
-                }
-            }
-
-            */
-
             base.Update(gameTime);
         }
 
@@ -155,7 +146,7 @@ namespace deeepio
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             _spriteBatch.Begin();
-
+            
             enemyList[0].Draw(_spriteBatch, eTexture, Color.White, SpriteEffects.None);
 
             for (int i = projList.Count - 1; i >= 0; i--)
@@ -175,13 +166,21 @@ namespace deeepio
     public class Sprite
     {
         public Rectangle Rect { get; set; }
+        public Rectangle Hitbox { get; set; }
         public float Rotation { get; set; }
         public Vector2 Origin { get; set; }
+        public int Health { get; set; }
 
-        public Sprite(int rectX, int rectY, int rectW, int rectH, int vectX, int vectY) 
+        public Sprite(int rectX, int rectY, int rectW, int rectH, int vectX, int vectY, int newHealth) 
         {
             this.Rect = new Rectangle(rectX, rectY, rectW, rectH);
             this.Origin = new Vector2(vectX, vectY);
+            this.Health = newHealth;
+        }
+
+        public void makeHitbox(int xChange, int yChange, int width, int height)
+        {
+
         }
 
         public void Draw(SpriteBatch sb, Texture2D text, Color c, SpriteEffects se)
