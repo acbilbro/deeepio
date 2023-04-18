@@ -19,10 +19,10 @@ namespace deeepio
         #region Enemy Variables
         Sprite testEnemy;
         Texture2D eTexture;
+        int frameCount = 0;
         #endregion
         
         Texture2D cursorTexture, projTexture;
-        SpriteFont font;
         Rectangle cursorRect;
         MouseState mouseState, prevMouseState;
         KeyboardState keyState;
@@ -46,7 +46,9 @@ namespace deeepio
 
             // Game stuff
             player = new Sprite(200, 200, 63, 83, 31, 51, 3);
-            testEnemy = new Sprite(500, 400, 130, 151, 130, 170, 10);
+            player.makeHitbox(10, 10, 43, 50);
+            testEnemy = new Sprite(500, 400, 130, 151, 130, 170, 20);
+            testEnemy.makeHitbox(10, 10, 110, 131);
             enemyList.Add(testEnemy);
 
             cursorRect = new Rectangle(0, 0, 25, 25);
@@ -62,8 +64,6 @@ namespace deeepio
             cursorTexture = Content.Load<Texture2D>("cursor");
             projTexture = Content.Load<Texture2D>("projectile");
             eTexture = Content.Load<Texture2D>("enemy");
-
-            font = Content.Load<SpriteFont>("font");
         }
 
         protected override void Update(GameTime gameTime)
@@ -75,6 +75,8 @@ namespace deeepio
 
             keyState = Keyboard.GetState();
             mouseState = Mouse.GetState();
+
+            frameCount += 1;
 
             #region Player Movement & Rotation
             Vector2 mousePosition = new Vector2(mouseState.X, mouseState.Y);
@@ -127,15 +129,51 @@ namespace deeepio
                 projList.Add(new Projectile(player.Rect, mouseState, gameTime));
             }
 
+            // Enemy Projectiles
+            for (int i = enemyList.Count - 1; i >= 0; i--)
+            {
+                if (frameCount == 180)
+                {
+                    frameCount = 0;
+                    projList.Add(new Projectile(enemyList[i].Rect, player.Rect, gameTime));
+                }
+            }
+
             // Update Projectiles
             for (int i = projList.Count - 1; i >= 0; i--)
             {
                 projList[i].Move(gameTime);
-                if (gameTime.TotalGameTime.TotalMilliseconds - projList[i].StartTime > 1300)
+                bool removed = false;
+                while (true)
                 {
-                    projList.RemoveAt(i);
+                    if (gameTime.TotalGameTime.TotalMilliseconds - projList[i].StartTime > 1300)
+                    {
+                        projList.RemoveAt(i);
+                        break;
+                    }
+                    for (int j = enemyList.Count - 1; j >= 0; j--)
+                    {
+                        if (projList[i].Hitbox.Intersects(enemyList[j].Hitbox) && !projList[i].IsFromEnemy)
+                        {
+                            enemyList[j].Health--;
+                            projList.RemoveAt(i);
+                            removed = true;
+                        }
+                    }
+                    if (removed)
+                    {
+                        break;
+                    }
+                    if (projList[i].Hitbox.Intersects(player.Hitbox) && projList[i].IsFromEnemy)
+                    {
+                        player.Health--;
+                        projList.RemoveAt(i);
+                        break;
+                    }
+                    break;
                 }
             }
+
             #endregion
 
             base.Update(gameTime);
@@ -180,7 +218,7 @@ namespace deeepio
 
         public void makeHitbox(int xChange, int yChange, int width, int height)
         {
-
+            this.Hitbox = new Rectangle(this.Rect.X + xChange, this.Rect.Y + yChange, width, height);
         }
 
         public void Draw(SpriteBatch sb, Texture2D text, Color c, SpriteEffects se)
@@ -191,23 +229,29 @@ namespace deeepio
         public void MoveX(int moveLength)
         {
             int newInt = this.Rect.X + moveLength;
+            int newHitInt = this.Hitbox.X + moveLength;
             this.Rect = new Rectangle(newInt, this.Rect.Y, this.Rect.Width, this.Rect.Height);
+            this.Hitbox = new Rectangle(newHitInt, this.Hitbox.Y, this.Hitbox.Width, this.Hitbox.Height);
         }
 
         public void MoveY(int moveLength)
         {
             int newInt = this.Rect.Y + moveLength;
+            int newHitInt = this.Hitbox.Y + moveLength;
             this.Rect = new Rectangle(this.Rect.X, newInt, this.Rect.Width, this.Rect.Height);
+            this.Hitbox = new Rectangle(this.Hitbox.X, newHitInt, this.Hitbox.Width, this.Hitbox.Height);
         }
     }
 
     public class Projectile
     {
+        public Rectangle Hitbox { get; set; }
         public Vector2 Position { get; set; }
         public Vector2 Direction { get; set; }
         public Vector2 Origin { get; set; }
         public float Speed { get; set; }
         public float StartTime { get; set; }
+        public bool IsFromEnemy { get; set; }
 
         public Projectile(Rectangle originRect, MouseState ms, GameTime gt)
         {
@@ -221,9 +265,30 @@ namespace deeepio
             nv.Normalize();
             this.Direction = nv;
 
+            this.Hitbox = new Rectangle(this.Position.ToPoint(), new Point(13, 13));
+
             this.StartTime = (int)gt.TotalGameTime.TotalMilliseconds;
             this.Speed = 0.58f;
             this.Origin = new Vector2(originRect.X - 10, originRect.Y - 5);
+            this.IsFromEnemy = false;
+        }
+
+        public Projectile(Rectangle originRect, Rectangle targetRect, GameTime gt)
+        {
+            /*
+             * nv has to exist, due to the fact that .Normalize() does not
+             * edit the Vector2 it is called on, so instead direction 
+             * must be copied, then normalized, and finally reset.
+             */
+            this.Direction = new Vector2(targetRect.X, targetRect.Y) - new Vector2(originRect.X, originRect.Y);
+            Vector2 nv = this.Direction;
+            nv.Normalize();
+            this.Direction = nv;
+
+            this.StartTime = (int)gt.TotalGameTime.TotalMilliseconds;
+            this.Speed = 0.58f;
+            this.Origin = new Vector2(originRect.X - 10, originRect.Y - 5);
+            this.IsFromEnemy = true;
         }
 
         public void Move(GameTime gt)
