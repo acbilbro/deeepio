@@ -22,12 +22,13 @@ namespace deeepio
         int frameCount = 0;
         #endregion
         
-        Texture2D cursorTexture, projTexture;
+        Texture2D cursorTexture, projTexture, testBox;
         Rectangle cursorRect;
         MouseState mouseState, prevMouseState;
         KeyboardState keyState;
         List<Projectile> projList = new List<Projectile>();
         List<Sprite> enemyList = new List<Sprite>();
+        SpriteFont font;
 
         public Game1()
         {
@@ -46,9 +47,21 @@ namespace deeepio
 
             // Game stuff
             player = new Sprite(200, 200, 63, 83, 31, 51, 3);
-            player.makeHitbox(10, 10, 43, 50);
+            player.makeHitbox(-22, -20, 43, 50);
+            
+            // Enemy 1 
             testEnemy = new Sprite(500, 400, 130, 151, 130, 170, 20);
-            testEnemy.makeHitbox(10, 10, 110, 131);
+            testEnemy.makeHitbox(-50, -50, 110, 111);
+            enemyList.Add(testEnemy);
+
+            // Enemy 2
+            testEnemy = new Sprite(1000, 820, 130, 151, 130, 170, 20);
+            testEnemy.makeHitbox(-50, -50, 110, 111);
+            enemyList.Add(testEnemy);
+
+            // Enemy 3
+            testEnemy = new Sprite(260, 100, 130, 151, 130, 170, 20);
+            testEnemy.makeHitbox(-50, -50, 110, 111);
             enemyList.Add(testEnemy);
 
             cursorRect = new Rectangle(0, 0, 25, 25);
@@ -64,6 +77,9 @@ namespace deeepio
             cursorTexture = Content.Load<Texture2D>("cursor");
             projTexture = Content.Load<Texture2D>("projectile");
             eTexture = Content.Load<Texture2D>("enemy");
+            testBox = Content.Load<Texture2D>("box");
+
+            font = Content.Load<SpriteFont>("font");
         }
 
         protected override void Update(GameTime gameTime)
@@ -109,8 +125,8 @@ namespace deeepio
             #region Enemy Stuff
             for (int i = enemyList.Count - 1; i >= 0; i--)
             {
-                Vector2 eDistance = new Vector2(enemyList[i].Rect.X - 100, enemyList[i].Rect.Y + 105) - new Vector2(player.Rect.Y, player.Rect.X);
-                enemyList[i].Rotation = - (float)Math.Atan2(eDistance.Y, eDistance.X) + (float)Math.PI/16;
+                Vector2 eDistance = new Vector2(enemyList[i].Rect.X, enemyList[i].Rect.Y) - new Vector2(player.Rect.X, player.Rect.Y);
+                enemyList[i].Rotation = (float)Math.Atan2(eDistance.Y, eDistance.X) + (3 * (float)Math.PI/2);
             }
 
             for (int i = enemyList.Count - 1; i >= 0; i--)
@@ -132,9 +148,8 @@ namespace deeepio
             // Enemy Projectiles
             for (int i = enemyList.Count - 1; i >= 0; i--)
             {
-                if (frameCount == 180)
+                if (frameCount % 1 == 0)
                 {
-                    frameCount = 0;
                     projList.Add(new Projectile(enemyList[i].Rect, player.Rect, gameTime));
                 }
             }
@@ -158,6 +173,7 @@ namespace deeepio
                             enemyList[j].Health--;
                             projList.RemoveAt(i);
                             removed = true;
+                            break;
                         }
                     }
                     if (removed)
@@ -181,19 +197,30 @@ namespace deeepio
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.DarkGray);
 
             _spriteBatch.Begin();
-            
-            enemyList[0].Draw(_spriteBatch, eTexture, Color.White, SpriteEffects.None);
 
             for (int i = projList.Count - 1; i >= 0; i--)
             {
                 _spriteBatch.Draw(projTexture, projList[i].Position, Color.White);
             }
 
+            for (int i = enemyList.Count - 1; i >= 0; i--)
+            {
+                enemyList[i].Draw(_spriteBatch, eTexture, Color.White, SpriteEffects.None);
+
+                _spriteBatch.DrawString(font, enemyList[i].Health.ToString(), new Vector2(10, 10), Color.White);
+
+                _spriteBatch.Draw(testBox, enemyList[i].Hitbox, Color.Red);
+            }
+
             player.Draw(_spriteBatch, pTexture, Color.White, SpriteEffects.None);
             _spriteBatch.Draw(cursorTexture, cursorRect, Color.White);
+
+            _spriteBatch.Draw(testBox, player.Hitbox, Color.Red);
+
+            _spriteBatch.DrawString(font, player.Health.ToString(), new Vector2(10, 30), Color.White);
 
             _spriteBatch.End();
 
@@ -294,6 +321,7 @@ namespace deeepio
         public void Move(GameTime gt)
         {
             this.Position = this.Origin + (this.Speed * ((int)gt.TotalGameTime.TotalMilliseconds - this.StartTime) * this.Direction);
+            this.Hitbox = new Rectangle(this.Position.ToPoint(), new Point(13, 13));
         }
     }
 }
