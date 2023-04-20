@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 
 namespace deeepio
 {
@@ -28,7 +29,17 @@ namespace deeepio
         KeyboardState keyState;
         List<Projectile> projList = new List<Projectile>();
         List<Sprite> enemyList = new List<Sprite>();
-        SpriteFont font;
+        SpriteFont font, font2, titleFont;
+
+        enum GameState
+        {
+            Menu,
+            Game,
+            Lose,
+            Win
+        }
+
+        GameState currentState = GameState.Menu;
 
         public Game1()
         {
@@ -80,149 +91,199 @@ namespace deeepio
             testBox = Content.Load<Texture2D>("box");
 
             font = Content.Load<SpriteFont>("font");
+            font2 = Content.Load<SpriteFont>("font2");
+            titleFont = Content.Load<SpriteFont>("titleFont");
         }
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
             prevMouseState = mouseState;
 
             keyState = Keyboard.GetState();
             mouseState = Mouse.GetState();
-
-            frameCount += 1;
-
-            #region Player Movement & Rotation
             Vector2 mousePosition = new Vector2(mouseState.X, mouseState.Y);
-            Vector2 distance = mousePosition - new Vector2(player.Rect.X, player.Rect.Y);
-            player.Rotation = (float)Math.Atan2(distance.Y, distance.X) + (float)Math.PI/2;
-
-            if (keyState.IsKeyDown(Keys.W))
-            {
-                player.MoveY(-2);
-            }
-            if (keyState.IsKeyDown(Keys.S))
-            {
-                player.MoveY(2);
-            }
-            if (keyState.IsKeyDown(Keys.A))
-            {
-                player.MoveX(-2);
-            }
-            if (keyState.IsKeyDown(Keys.D))
-            {
-                player.MoveX(2);
-            }
-            #endregion
 
             #region Cursor Stuff
             cursorRect.X = (int)mousePosition.X - 12;
             cursorRect.Y = (int)mousePosition.Y - 12;
             #endregion
 
-            #region Enemy Stuff
-            for (int i = enemyList.Count - 1; i >= 0; i--)
+            switch (currentState)
             {
-                Vector2 eDistance = new Vector2(enemyList[i].Rect.X, enemyList[i].Rect.Y) - new Vector2(player.Rect.X, player.Rect.Y);
-                enemyList[i].Rotation = (float)Math.Atan2(eDistance.Y, eDistance.X) + (3 * (float)Math.PI/2);
-            }
-
-            for (int i = enemyList.Count - 1; i >= 0; i--)
-            {
-                if (enemyList[i].Health == 0)
-                {
-                    enemyList.RemoveAt(i);
-                }
-            }
-            #endregion
-
-            #region Projectile Stuff
-            // Player Projectiles
-            if (mouseState.LeftButton == ButtonState.Released && prevMouseState.LeftButton == ButtonState.Pressed)
-            {
-                projList.Add(new Projectile(player.Rect, mouseState, gameTime));
-            }
-
-            // Enemy Projectiles
-            for (int i = enemyList.Count - 1; i >= 0; i--)
-            {
-                if (frameCount % 1 == 0)
-                {
-                    projList.Add(new Projectile(enemyList[i].Rect, player.Rect, gameTime));
-                }
-            }
-
-            // Update Projectiles
-            for (int i = projList.Count - 1; i >= 0; i--)
-            {
-                projList[i].Move(gameTime);
-                bool removed = false;
-                while (true)
-                {
-                    if (gameTime.TotalGameTime.TotalMilliseconds - projList[i].StartTime > 1300)
+                case GameState.Menu:
+                    if (keyState.IsKeyDown(Keys.Space) || keyState.IsKeyDown(Keys.Enter))
                     {
-                        projList.RemoveAt(i);
-                        break;
+                        currentState = GameState.Game;
                     }
-                    for (int j = enemyList.Count - 1; j >= 0; j--)
+
+                    break;
+                case GameState.Game:
+                    frameCount += 1;
+
+                    #region Player Movement & Rotation
+                    Vector2 distance = mousePosition - new Vector2(player.Rect.X, player.Rect.Y);
+                    player.Rotation = (float)Math.Atan2(distance.Y, distance.X) + (float)Math.PI / 2;
+
+                    if (keyState.IsKeyDown(Keys.W))
                     {
-                        if (projList[i].Hitbox.Intersects(enemyList[j].Hitbox) && !projList[i].IsFromEnemy)
+                        player.MoveY(-2);
+                    }
+                    if (keyState.IsKeyDown(Keys.S))
+                    {
+                        player.MoveY(2);
+                    }
+                    if (keyState.IsKeyDown(Keys.A))
+                    {
+                        player.MoveX(-2);
+                    }
+                    if (keyState.IsKeyDown(Keys.D))
+                    {
+                        player.MoveX(2);
+                    }
+                    #endregion
+
+                    #region Enemy Stuff
+                    for (int i = enemyList.Count - 1; i >= 0; i--)
+                    {
+                        Vector2 eDistance = new Vector2(enemyList[i].Rect.X, enemyList[i].Rect.Y) - new Vector2(player.Rect.X, player.Rect.Y);
+                        enemyList[i].Rotation = (float)Math.Atan2(eDistance.Y, eDistance.X) + (3 * (float)Math.PI / 2);
+                    }
+
+                    for (int i = enemyList.Count - 1; i >= 0; i--)
+                    {
+                        if (enemyList[i].Health == 0)
                         {
-                            enemyList[j].Health--;
-                            projList.RemoveAt(i);
-                            removed = true;
+                            enemyList.RemoveAt(i);
+                        }
+                    }
+                    #endregion
+
+                    #region Projectile Stuff
+                    // Player Projectiles
+                    if (mouseState.LeftButton == ButtonState.Released && prevMouseState.LeftButton == ButtonState.Pressed)
+                    {
+                        projList.Add(new Projectile(player.Rect, mouseState, gameTime));
+                    }
+
+                    // Enemy Projectiles
+                    for (int i = enemyList.Count - 1; i >= 0; i--)
+                    {
+                        if (frameCount % 120 == 0)
+                        {
+                            projList.Add(new Projectile(enemyList[i].Rect, player.Rect, gameTime));
+                        }
+                    }
+
+                    // Update Projectiles
+                    for (int i = projList.Count - 1; i >= 0; i--)
+                    {
+                        projList[i].Move(gameTime);
+                        bool removed = false;
+                        while (true)
+                        {
+                            if (gameTime.TotalGameTime.TotalMilliseconds - projList[i].StartTime > 1300)
+                            {
+                                projList.RemoveAt(i);
+                                break;
+                            }
+                            for (int j = enemyList.Count - 1; j >= 0; j--)
+                            {
+                                if (projList[i].Hitbox.Intersects(enemyList[j].Hitbox) && !projList[i].IsFromEnemy)
+                                {
+                                    enemyList[j].Health--;
+                                    projList.RemoveAt(i);
+                                    removed = true;
+                                    break;
+                                }
+                            }
+                            if (removed)
+                            {
+                                break;
+                            }
+                            if (projList[i].Hitbox.Intersects(player.Hitbox) && projList[i].IsFromEnemy)
+                            {
+                                player.Health--;
+                                projList.RemoveAt(i);
+                                break;
+                            }
                             break;
                         }
                     }
-                    if (removed)
-                    {
-                        break;
-                    }
-                    if (projList[i].Hitbox.Intersects(player.Hitbox) && projList[i].IsFromEnemy)
-                    {
-                        player.Health--;
-                        projList.RemoveAt(i);
-                        break;
-                    }
-                    break;
-                }
-            }
+                    #endregion
 
-            #endregion
+                    if (player.Health == 0)
+                    {
+                        currentState = GameState.Lose;
+                    }
+                    if (enemyList[0].Health == 0 && enemyList[1].Health == 0 && enemyList[2].Health == 0)
+                    {
+                        currentState = GameState.Win;
+                    }
+
+                    break;
+            }
 
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.DarkGray);
-
-            _spriteBatch.Begin();
-
-            for (int i = projList.Count - 1; i >= 0; i--)
+            switch(currentState)
             {
-                _spriteBatch.Draw(projTexture, projList[i].Position, Color.White);
+                case GameState.Menu:
+                    GraphicsDevice.Clear(Color.Cornsilk);
+
+                    _spriteBatch.Begin();
+
+                    _spriteBatch.DrawString(titleFont, "DEEPIO", new Vector2((GraphicsDevice.Viewport.Width / 2) - (titleFont.MeasureString("DEEPIO").X /2), 100), Color.Black);
+                    _spriteBatch.DrawString(font2, "Press the space bar or enter to start!", new Vector2((GraphicsDevice.Viewport.Width / 2) - (font2.MeasureString("Press the space bar or enter to start!").X / 2), 600), Color.Black);
+                    _spriteBatch.Draw(cursorTexture, cursorRect, Color.White);
+
+                    _spriteBatch.End();
+
+                    break;
+                case GameState.Game:
+                    GraphicsDevice.Clear(Color.DarkGray);
+
+                    _spriteBatch.Begin();
+
+                    for (int i = projList.Count - 1; i >= 0; i--)
+                    {
+                        _spriteBatch.Draw(projTexture, projList[i].Position, Color.White);
+                    }
+
+                    for (int i = enemyList.Count - 1; i >= 0; i--)
+                    {
+                        enemyList[i].Draw(_spriteBatch, eTexture, Color.White, SpriteEffects.None);
+                    }
+
+                    player.Draw(_spriteBatch, pTexture, Color.White, SpriteEffects.None);
+                    _spriteBatch.Draw(cursorTexture, cursorRect, Color.White);
+
+                    _spriteBatch.Draw(testBox, player.Hitbox, Color.Red);
+
+                    _spriteBatch.DrawString(font, "Health: " + player.Health.ToString(), new Vector2(10, 10), Color.White);
+
+                    _spriteBatch.End();
+
+                    break;
+                case GameState.Lose:
+                    GraphicsDevice.Clear(Color.Black);
+
+                    _spriteBatch.Begin();
+
+                    //_spriteBatch.Draw(titleFont, "YOU LOSE", new Vector2((GraphicsDevice.Viewport.Width / 2)))
+
+                    _spriteBatch.End();
+
+                    break;
+                case GameState.Win:
+
+                    break;
             }
-
-            for (int i = enemyList.Count - 1; i >= 0; i--)
-            {
-                enemyList[i].Draw(_spriteBatch, eTexture, Color.White, SpriteEffects.None);
-
-                _spriteBatch.DrawString(font, enemyList[i].Health.ToString(), new Vector2(10, 10), Color.White);
-
-                _spriteBatch.Draw(testBox, enemyList[i].Hitbox, Color.Red);
-            }
-
-            player.Draw(_spriteBatch, pTexture, Color.White, SpriteEffects.None);
-            _spriteBatch.Draw(cursorTexture, cursorRect, Color.White);
-
-            _spriteBatch.Draw(testBox, player.Hitbox, Color.Red);
-
-            _spriteBatch.DrawString(font, player.Health.ToString(), new Vector2(10, 30), Color.White);
-
-            _spriteBatch.End();
 
             base.Draw(gameTime);
         }
